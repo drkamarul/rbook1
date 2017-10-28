@@ -1,0 +1,234 @@
+---
+output:
+  pdf_document: default
+  html_document:
+    keep_md: yes
+---
+
+# Data transformation (data munging or data wrangling)
+
+## Definition of data wrangling 
+
+Data munging or data wrangling is loosely the process of manually converting or mapping data from one "raw" form into another format that allows for more convenient consumption of the data with the help of semi-automated tools. 
+
+Refer <https://community.modeanalytics.com/sql/tutorial/data-wrangling-with-sql/>
+
+## Package: dplyr 
+
+**dplyr** is a grammar of data manipulation, providing a consistent set of verbs that help you solve the most common data manipulation challenges
+
+Refer <https://github.com/tidyverse/dplyr>
+
+## Data wrangling using dplyr
+
+When we communicate with data, common procedures include
+
+1.  reduce the size of dataset by selecting certain variables
+2.  create new variables from existing variables 
+3.  sort observation of a variable 
+4.  group observations that fulfil certain criteria
+5.  reduce variable to groups to in order to estimate summary statistic 
+
+# Using dplyr package 
+
+For the procedures listed above, the corresponding **dplyr** functions are
+
+1.  reduce the size of dataset by selecting certain variables : `select`
+2.  create new variables from existing variables : `mutate`
+3.  sort observation of a variable : `arrange`
+4.  group observations that fulfil certain criteria : `filter`
+5.  reduce variable to groups to in order to estimate summary statistic : `summarize` + `group_by`
+
+## Preparation and data
+
+### Working directory and data format
+
+Make sure, if you deal with your own data:
+
+1.  that you have set your working directory
+2.  you have read the data using the correct package::function
+
+### Training data
+
+To replicate the examples demonstrated on *tidyverse* website <https://github.com/tidyverse/dplyr> we will use similar dataset or datasets 
+Grammar of variables 
+
+The data name is `starwars` coming with **dplyr** package. This data comes from SWAPI, the Star Wars API, http://swapi.co/. 
+
+A tibble with 87 rows and 13 variables:
+
+```{r}
+library(dplyr)
+names(starwars)
+```
+
+Let us examine the first 10 observations of the data
+
+```{r}
+starwars
+```
+
+## Function: select and mutate 
+
+### Select
+
+To select some columns of all columns 
+
+The are 13 variables. Now, we want to select only a few of them:
+
+1.  name
+2.  height (cm)
+3.  mass (kg) 
+4.  gender
+
+```{r}
+mysw <- select(starwars, name, gender, height, mass)
+head(mysw, 10)
+```
+
+### Mutate 
+
+Create a new variable - mutate
+
+We want to create a new variable `bmi` which equals mass in kg divided by squared height (in meter) $$\frac{kg}{m^2}$$
+
+```{r}
+mysw <- mutate(mysw, bmi = mass/(height/100)^2)
+mysw
+```
+
+## arrange and filter
+
+### arrange
+
+This will sort the observation based on the values of a variable. Let see from the biggest bmi to the lowest bmi, first.
+
+```{r}
+mysw <- arrange(mysw, desc(bmi))
+head(mysw)
+```
+
+Then, from the lowest to the biggest bmi 
+
+```{r}
+mysw <- arrange(mysw, bmi)
+head(mysw)
+```
+
+
+### filter
+
+Group observations based on certain criteria - filter
+
+We would like to create a new dataset containing only male gender and BMI at or above 30 
+
+```{r}
+mysw_m_40 <- filter(mysw, gender == 'male', bmi >= 30)
+head(mysw_m_40)
+```
+
+How about, create a new dataset containing height above 200 or BMI above 45, but does not include NA in bmi
+
+```{r}
+mysw_ht_45 <- filter(mysw, height >200 | bmi >45, bmi != 'NA')
+mysw_ht_45
+```
+
+## group_by 
+
+### Summarize data - summarize
+
+A useful function that sometimes needed is `group_by`
+
+```{r}
+mysw_g <- group_by(mysw, gender)
+summarise(mysw_g, meanbmi = mean(bmi, na.rm = TRUE),
+                  meanht  = mean(height, na.rm = TRUE),
+                  meanmass = mean(mass, na.rm = TRUE))
+```
+
+## Summary
+
+'dplyr' package is a very useful package that encourage users to use proper verb when manipulating variables (columns) and observations (rows). 
+
+We have learned to use 5 functions but there are more functions available. Other useful functions are:
+
+1.  distinct()
+2.  mutate() and transmute()
+3.  sample_n() and sample_frac()
+
+Package 'dplyr' is very useful when it is combined with another function that is 'group_by'
+
+# Using forcats package
+
+## Categorical variables 
+
+One of the most important uses of factors is in statistical modeling; since categorical variables enter into statistical models differently than continuous variables, storing data as factors insures that the modeling functions will treat such data correctly.
+
+Factors in R are stored as a vector of integer values with a corresponding set of character values to use when the factor is displayed. The factor function is used to create a factor. The only required argument to factor is a vector of values which will be returned as a vector of factor values.
+
+
+This package helps to work with factor variables. To start with let us creat a dummy dataset
+
+## forcats
+
+### New dataset
+
+```{r}
+sex1 <- rbinom(n = 100, size = 1, prob = 0.5) 
+str(sex1)
+race1 <- rep(seq(1:4), 25)
+str(race1)
+data_f <- data.frame(sex1, race1)
+head(data_f)
+```
+
+We can see the data now. Now let us see the structure of all variables. You should see that they are all in the integer (numerical) format
+
+```{r}
+str(data_f)
+```
+
+### Convert numeric to factor variables
+
+1.  sex1 (int) to male (factor) 
+2.  race1 (int) to race2 (factor)
+
+```{r}
+data_f$male <- factor(data_f$sex1, labels = c('No', 'Yes')) 
+data_f$race2 <- factor(data_f$race1, labels = c('Mal', 'Chi', 'Ind', 'Others')) 
+str(data_f)
+```
+
+### Recode old to new levels
+
+Steps:
+
+1.  Create a new variable `malay`
+2.  From `No` vs `Yes` TO `Fem` and `Male`
+3.  From `Non-Malay` TO `Chi`, `Non-Malay` TO  `Ind` and `Non-Malay` TO `Others`. We keep `Mal` as it is
+
+
+```{r} 
+library(dplyr)
+library(forcats)
+data_f$male <- data_f$male %>% fct_recode('Fem' = 'No', 'Male' = 'Yes')
+data_f <- data_f %>% mutate(malay = fct_recode(race2, 'Non-Malay' = 'Chi', 'Non-Malay' = 'Ind', 'Non-Malay' = 'Others'))
+head(data_f)
+```
+
+# Session 
+
+```{r}
+sessionInfo()
+```
+
+
+
+# References
+
+1.  <https://community.modeanalytics.com/sql/tutorial/data-wrangling-with-sql/>
+2.  <https://github.com/tidyverse/dplyr>
+3.  <https://blog.rstudio.com/2016/08/31/forcats-0-1-0/>
+4.  <https://www.stat.berkeley.edu/classes/s133/factors.html>
+4.  

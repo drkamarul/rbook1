@@ -1,0 +1,515 @@
+---
+output:
+  pdf_document: default
+  html_document:
+    keep_md: yes
+---
+
+# Preparation
+
+## Set the working directory
+
+It is very important that we choose a folder to store the
+
+1.  dataset
+2.  outputs
+3.  codes (R scripts, R markdown files)
+
+## Read data
+
+The common data formats include
+
+1.  comma separated files (.csv)
+2.  MS Excel file (.xlsx)
+3.  SPSS file (.sav)
+4.  Stata file (.dta)
+5.  SAS file 
+
+Less common but getting more important are data from databases
+
+1.  MySQL
+2.  SQLite
+3.  Postgresql
+4.  Mariadb
+
+## Training data
+
+We will use build-in data `mtcars`. The data is a data frame class with 32 observations on 11 variables.
+
+1.  [, 1]	 mpg	 Miles/(US) gallon
+2.  [, 2]	 cyl	 Number of cylinders
+3.  [, 3]	 disp	 Displacement (cu.in.)
+4.  [, 4]	 hp	 Gross horsepower
+5.  [, 5]	 drat	 Rear axle ratio
+6.  [, 6]	 wt	 Weight (1000 lbs)
+7.  [, 7]	 qsec	 1/4 mile time
+8.  [, 8]	 vs	 V/S
+9.  [, 9]	 am	 Transmission (0 = automatic, 1 = manual)
+10. [,10]	 gear	 Number of forward gears
+11. [,11]	 carb	 Number of carburetors
+
+```{r}
+data(mtcars)
+summary(mtcars)
+```
+
+
+## Questions to ask when graphing or plotting data
+
+You must ask yourselves these:
+
+1.  Which variable do you want to plot?
+2.  What is the type of that variable? 
+- Factor (categorical) ? 
+- Numerical?
+3.  Are you going to plot 
+- a single variable
+- two variables together
+- three variables together?
+
+
+# Hands-on 1 - graphics package
+
+For this part, we will be using built-in datasets. Later, we can practice using our datasets.
+
+## One variable: A categorical variable
+
+Most of these notes come from this website <http://www.statmethods.net/graphs/density.html>
+
+For categorical variable, we can plot the barchart to display the frequencies of the data
+
+```{r}
+counts <- table(mtcars$gear)
+counts
+```
+Now we will plot the **count** object
+
+```{r}
+barplot(counts, main="Car Distribution", 
+  	xlab="Number of Gears")
+```
+
+
+## One variable: A numerical variable
+
+A common graphic for numerical variable is histogram
+
+### Histogram
+
+We are using a built-in dataset **mtcars**.
+
+We can create histograms with the function `hist(x)` where x is a numeric vector of values to be plotted. The option `freq=FALSE` plots probability densities instead of frequencies. The option `breaks=` controls the number of bins.
+
+```{r}
+hist(mtcars$mpg)
+```
+
+Now we will
+
+1.  set the colour to red
+2.  12 bins
+
+```{r}
+hist(mtcars$mpg, breaks=14, col="red",
+     main = "MPG distribution", xlab = "mpg")
+```
+
+### Kernel density plot
+
+Kernal density plots are usually a much more effective way to view the distribution of a variable. Create the plot using `plot(density(x))` where x is a numeric vector.
+
+```{r}
+d <- density(mtcars$mpg) # returns the density data 
+plot(d, main="Kernel Density of Miles Per Gallon") # plots the results
+```
+
+## Two variables : A numerical with another numerical variable
+
+We can plot two numerical variables simultenously. From such plot, we can see the association or relationship.  
+
+### Scatterplot
+
+Scatterplot is one of the most common plot to display the association between 2 numerical variables.
+
+```{r}
+plot(mtcars$wt, mtcars$mpg, main="Scatterplot Example", 
+  	xlab="Car Weight ", ylab="Miles Per Gallon ", pch=19)
+```
+
+The view the graphical parameters such as parameters for Fonts, Colours, Lines and Symbols, you can click this link <http://www.statmethods.net/advgraphs/parameters.html>
+
+# Hands-on 2 - ggplot2 package
+
+The official website for ggplot2 is here <http://ggplot2.org/>.
+
+In the website, it mentions that *ggplot2 is a plotting system for R, based on the grammar of graphics, which tries to take the good parts of base and lattice graphics and none of the bad parts. It takes care of many of the fiddly details that make plotting a hassle (like drawing legends) as well as providing a powerful model of graphics that makes it easy to produce complex multi-layered graphics.*
+
+## One variable: A numerical variable
+
+We would like to plot the distribution of a numerical variable
+
+### Histogram
+
+Parts of the notes come from <http://www.cookbook-r.com/Graphs/Plotting_distributions_(ggplot2)/>
+
+Now, let us create an artificial dataset. We use `set.seed()` to make sure the simulation will give similar results every time. We then create a dataset using `data.frame()` function. 
+
+Next, we will view the first 6 rows of the dataset.
+
+```{r}
+set.seed(1234)
+dat <- data.frame(cond = factor(rep(c("A","B"), each=200)), 
+                   rating = c(rnorm(200),rnorm(200, mean=.8)))
+head(dat)
+```
+
+We then use the `library(ggplot2)` to active the package
+
+```{r}
+library(ggplot2)
+```
+
+In ggplot2, we first use `ggplot()` function to choose the dataset and the variable or variables to be plotted. Then we use `geom_` to specify the geometric form of the plot.
+
+```{r}
+myplot <- ggplot(dat, aes(x=rating))
+myplot + geom_histogram(binwidth = 0.5)
+```
+
+
+We can do further personalization to the plot
+
+```{r}
+ggplot(dat, aes(x=rating)) + 
+  geom_histogram(binwidth = 0.5, colour = "black", fill = "white")
+```
+
+### Density curve
+
+```{r}
+ggplot(dat, aes(x=rating)) + 
+  geom_density()
+```
+
+### Combining the histogram and the density curve
+
+We can combine multiple plots in one single plot. What we are doing basically overlaying multiple plots on one another.
+
+Here, we will overlay a density curve over the histogram. And we need to specify a histogram with density instead of count on y-axis
+
+```{r}
+ggplot(dat, aes(x = rating)) + 
+    geom_histogram(aes(y = ..density..),      
+                   binwidth = 0.5,
+                   colour = "black", fill = "white") +
+    geom_density(alpha = .2, fill = "#FF6666")
+```
+
+## One variable: A categorical variable
+
+Assuming we have these data
+
+```{r}
+datcat <- data.frame(
+  disease = factor(c("HPT","DM"), levels=c("HPT","DM")),
+  percnt = c(32.2, 16.5)
+)
+datcat
+```
+
+Now, let us create a basic barchart using **ggplot2**
+
+```{r}
+datcatp <- ggplot(data = datcat, mapping = aes(x = disease, y = percnt))
+datcatp + geom_bar(stat = 'identity')
+
+```
+
+Seem it looks OK, time to personalize the plot
+
+```{r}
+ggplot(data = datcat, mapping = aes(x = disease, y = percnt, 
+                                    fill = disease)) + 
+  geom_bar(stat = 'identity') +
+  xlab('Diseases') + ylab('Percentage') +
+  ggtitle('Percentages of HPT and DM')
+
+```
+
+Excellent resource from this website <http://www.cookbook-r.com/Graphs/Bar_and_line_graphs_(ggplot2)/>
+
+
+
+## Two variables: A numerical and a categorical variable
+
+We would like to examine the distribution of a numerical variable (**rating**) in two groups of variable **cond** by 
+
+1.  overlaying two histograms
+2.  interleaving two histograms
+3.  overlaying two density curve
+
+### Overlaying histograms
+
+```{r}
+
+ggplot(dat, aes(x=rating, fill=cond)) +
+    geom_histogram(binwidth=.5, alpha=.5, position="identity")
+```
+
+### Interleaving histograms
+
+```{r}
+ggplot(dat, aes(x=rating, fill=cond)) +
+    geom_histogram(binwidth=.5, position="dodge")
+  
+```
+
+### Overlaying density plots
+
+```{r}
+ggplot(dat, aes(x=rating, colour=cond)) + geom_density()
+
+# Density plots with semi-transparent fill
+ggplot(dat, aes(x=rating, fill=cond)) + geom_density(alpha=.3)
+```
+
+### Using facets
+
+Vertical facets
+
+```{r}
+ggplot(dat, aes(x = rating)) + geom_histogram(binwidth = .5, colour = "black", fill = "white") + 
+    facet_grid(cond ~ .)
+```
+
+Horizontal facets
+
+```{r}
+ggplot(dat, aes(x = rating)) + geom_histogram(binwidth = .5, colour = "black", fill = "white") + 
+    facet_grid(. ~ cond)
+```
+
+
+## Two or more categorical variables
+
+Please refer to this excellent website <http://www.cookbook-r.com/Graphs/Bar_and_line_graphs_(ggplot2)/> . It has many examples of plots and how you can construct them 
+
+# Hands-on 3 - lattice package
+
+A vignette for *lattice* package can be found here <http://lattice.r-forge.r-project.org/Vignettes/src/lattice-intro/lattice-intro.pdf>
+
+## Data and package
+
+### Package 
+
+We will use **mlmRev** package just to get access to the dataset named as  `Chem97`
+
+```{r}
+#install.packages('mlmRev')
+library(mlmRev)
+data(Chem97)
+```
+
+### Training data
+
+We will read `Chem97` data and describe the data.
+
+```{r}
+data(Chem97)
+summary(Chem97)
+```
+
+## View data
+
+View the first 6 observations
+
+```{r}
+head(Chem97)
+```
+
+## One numerical variable - Histogram
+
+Activate the **lattice** package
+
+```{r}
+library(lattice)
+```
+
+
+A histogram for a numerical variable
+
+```{r}
+histogram(~ gcsescore, data = Chem97, 
+          xlab = 'GCSE Score')
+```
+
+## One numerical and one categorical variable - histogram
+
+```{r}
+histogram(~ gcsescore | factor(score), data = Chem97,
+          xlab = 'GCSE Score', )
+```
+
+## Barchart
+
+A small dataset (5 rows) in matric form
+
+```{r}
+VADeaths
+```
+
+
+Convert to a data frame format, then view the data. 
+
+```{r}
+VADeathsDF <- as.data.frame.table(VADeaths)
+VADeathsDF
+```
+
+Next, we will name *Var1* as *agegrp* and *Var2* as *LocGender* and *Freq* column as *response*
+
+```{r}
+colnames(VADeathsDF) <- c('agegrp' ,'LocGender', 'response')
+VADeathsDF
+```
+
+We will create 4 bar charts. Line horizontaly. 
+
+```{r}
+barchart(agegrp ~ response | LocGender, VADeathsDF, layout = c(4, 1))
+```
+
+Now we change the variables for the x and y axes and also the column and row arrangements
+
+```{r}
+barchart(response ~ agegrp | LocGender, VADeathsDF, layout = c(1, 4))
+```
+
+# Hands-on 4 - plotly package
+
+Plotly's R graphing library makes interactive, publication-quality graphs online.
+
+Reference : <https://plot.ly/r/>
+
+QUite a big package. Needs **tidyr** package
+
+```{r}
+#install.packages('plotly')
+#install.packages('tidyr')
+library(plotly)
+```
+
+## Scatterplot
+
+Data comes from `diamond` dataset
+
+```{r}
+set.seed(100)
+d <- diamonds[sample(nrow(diamonds), 1000), ]
+plot_ly(d, x = ~carat, y = ~price, color = ~carat,
+        size = ~carat, text = ~paste("Clarity: ", clarity))
+```
+
+
+# Take-home Exercise
+
+## Reading dataset from STATA file (.dta) 
+
+Dataset in SPSS format will end with `.dta`. To read STATA data into R we can use 'foreign' library. 
+
+Create a object to represent the STATA data that we will read into R.  
+
+```{r}
+library(foreign)
+qol <- read.dta('qol.dta', convert.factors = TRUE)
+```
+
+## Graphing or Plotting data
+
+You must ask yourselves these:
+
+1.  Which variable do you want to plot?
+2.  What is the type of that variable? 
+- Factor (categorical) ? 
+- Numerical?
+3.  Are you going to plot 
+- a single variable
+- two variables together
+- three variables together?
+
+### One variable: A categorical or factor variable
+
+We can create a simple barchart. And we need to load **ggplot2** package
+
+```{r}
+library(ggplot2)
+```
+
+Now, let us make some plots
+
+```{r}
+sex_p <- table(qol$sex)
+sex_p2 <- data.frame(sex_p)
+ggplot(sex_p2, aes(Var1, Freq, fill = Var1)) + geom_bar(stat = 'identity')
+```
+
+
+### One variable: A numerical variable
+
+histogram
+
+```{r}
+library(ggplot2)
+ggplot(qol, aes(x = age)) + geom_histogram()
+ggplot(qol, aes(x = age)) + geom_histogram(binwidth = 1)
+#ggplot(qol, aes(x = age)) + geom_histogram(binwidth = 1, 
+#                                          colour = 'black',
+#                                           fill = 'white')
+
+```
+
+
+### Two variables : a numerical with a categorical variable 
+
+Histogram
+
+```{r}
+ggplot(qol, aes(x = fbs, fill = complica)) +
+    geom_histogram(binwidth=.5, alpha=.5, position="identity")
+```
+
+Boxplot
+
+```{r}
+ggplot(qol, aes(x = complica, y = fbs)) + geom_boxplot()
+ggplot(qol, aes(x = complica, y = fbs, 
+                fill = complica)) + geom_boxplot()
+
+```
+
+## Saving plot
+
+Save the last plot with size 20 cm width and 20 cm height in
+
+1.  pdf format
+2.  png format
+3.  jpg with default dpi
+4.  jpg with 400 dpi
+
+```{r}
+ggsave("fbs_complica.pdf", width = 20, height = 20, units = "cm")
+ggsave("fbs_complica.png", width = 20, height = 20, 
+       units = "cm")
+ggsave("fbs_complica.jpg", width = 20, height = 20, 
+       units = "cm")
+ggsave("fbs_complica2.jpg", width = 20, height = 20, 
+       units = "cm", dpi = 400)
+
+```
+
+
+# Environment
+
+```{r}
+sessionInfo()
+```
